@@ -1,0 +1,121 @@
+import openpyxl
+from openpyxl import Workbook
+from openpyxl.chart import (
+    PieChart,
+    ProjectedPieChart,
+    Reference
+)
+from openpyxl.chart.series import DataPoint
+wb2 = Workbook()
+ws = wb2.active
+ws.cell(row=1,column=1).value="Resource"
+ws.cell(row=2,column=1).value="TBE"
+ws.cell(row=3,column=1).value="NEW"
+ws.cell(row=4,column=1).value="OE"
+ws.cell(row=5,column=1).value="PO"
+ws.cell(row=6,column=1).value="LEAVE"
+ws.cell(row=7,column=1).value="TRAVEL"
+ws.cell(row=8,column=1).value="OT"
+ws.cell(row=9,column=1).value="AVBL"
+class Resource:
+        new=0.0
+        tbe=0.0
+        oe=0.0
+        po=0.0
+        leave=0.0
+        travel=0.0
+        ot=0.0
+        avbl=0.0
+        def resource_chart(self,number):
+                print("the number is",number)
+                ws.cell(row=1,column=number).value=number
+                ws.cell(row=2,column=number).value=self.tbe
+                ws.cell(row=3,column=number).value=self.new
+                ws.cell(row=4,column=number).value=self.oe
+                ws.cell(row=5,column=number).value=self.po
+                ws.cell(row=6,column=number).value=self.leave
+                ws.cell(row=7,column=number).value=self.travel
+                ws.cell(row=8,column=number).value=self.ot
+                ws.cell(row=9,column=number).value=self.avbl
+                pie = PieChart()
+                labels = Reference(ws,min_col=1,min_row=2, max_col=1,max_row=9)
+                data = Reference(ws,min_col=number,min_row=1,max_col=number,max_row=9)
+                print("the data are",data)
+                pie.add_data(data, titles_from_data=True)
+                pie.set_categories(labels)
+                pie.title ="work hours"
+                #print(pie)
+                # Cut the first slice out of the pie
+                sheetname="resource"+str(number)
+                wb2.create_sheet(sheetname)
+                sheet_char=wb2.get_sheet_by_name(sheetname)
+                sheet_char.add_chart(pie, "D1")
+                wb2.save("res_trail.xlsx")
+wb=openpyxl.load_workbook("Resource Utilisation_FY'19.xlsx")
+sheet=wb.get_sheet_by_name("Jul'19")
+ws = wb2.active
+workingdays=0
+for col_cells in sheet.iter_cols(min_col=1, max_col=1,min_row=4):
+    for cell in col_cells:
+        if cell.value!=None:
+                workingdays+=1
+#print("working days",workingdays)
+utilized_hours=0
+resource=8              # harcoded for now can take the data from header sheet
+col=2                   #column header
+objects=[]
+total=Resource()
+##total_tbe=0.0
+##total_new=0.0
+##total_oe=0.0
+##total_po=0.0
+##total_travel=0.0
+##total_ot=0.0
+##total_leave=0.0
+##total_avbl=0.0
+for j in range(0,resource,1):
+    objects.append(Resource())  
+    #print("the column is",col)
+    for i in range (4,sheet.max_row,1):
+        print("the row number",i)
+        if(sheet.cell(row=i,column=col).value=="TBE"):
+            objects[j].tbe=objects[j].tbe+sheet.cell(row=i,column=col+2).value
+        elif(sheet.cell(row=i,column=col).value=="NEW"):
+            objects[j].new=objects[j].new+sheet.cell(row=i,column=col+2).value
+        elif(sheet.cell(row=i,column=col).value=="OE"):
+            objects[j].oe=objects[j].oe+sheet.cell(row=i,column=col+2).value
+        elif(sheet.cell(row=i,column=col).value=="PO"):
+            objects[j].po=objects[j].po+sheet.cell(row=i,column=col+2).value
+      #  elif(sheet.cell(row=i,column=col).value=="LEAVE"):
+      #      leave=leave+0
+        elif(sheet.cell(row=i,column=col).value=="TRAVEL"):
+            objects[j].travel=objects[j].travel+sheet.cell(row=i,column=col+2).value
+        elif(sheet.cell(row=i,column=col).value=="OT"):
+            objects[j].ot=objects[j].ot+sheet.cell(row=i,column=col+2).value
+        elif(sheet.cell(row=i,column=col).value=="AVBL"):
+            objects[j].avbl=objects[j].avbl+sheet.cell(row=i,column=col+2).value
+    objects[j].resource_chart(j+2)
+    col=col+3
+##    print ("tbe=", objects[j].tbe)
+##    print("new=", objects[j].new)
+##    print("oe=", objects[j].oe)
+##    print("po=", objects[j].po)
+##    print("leave=", objects[j].leave)
+##    print("travel=", objects[j].travel)
+##    print("ot=", objects[j].ot)
+##    print("avbl=", objects[j].avbl)
+    total.tbe+= objects[j].tbe
+    total.new+=objects[j].new
+    total.oe+=objects[j].oe
+    total.po+=objects[j].po
+    total.leave+=objects[j].leave
+    total.travel+=objects[j].travel
+    total.ot+=objects[j].ot
+    total.avbl+= objects[j].avbl
+total_hours=resource*8*workingdays
+total.resource_chart(resource+2)
+utilized_hours=total.tbe+total.new+total.oe+total.po+total.leave+total.travel+total.ot+total.avbl
+print("the working days is",workingdays)
+print("utlized_hours",utilized_hours)
+print(utilized_hours/total_hours)
+wb2.save("res_trail.xlsx")
